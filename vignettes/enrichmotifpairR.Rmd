@@ -1,0 +1,52 @@
+---
+title: "enrichmotifpairR: Motif and motif pairs differential enrichment analysis"
+author: "Naresh Doni Jayavelu"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    theme: united
+vignette: >
+  %\VignetteIndexEntry{motifenrichpairR vignette}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteKeywords{motifs, enrichments, regions}
+  %\VignettePackage{enrichmotifpairR}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction:
+
+Add text here.
+
+## Installation:
+
+Install the package from Github.
+
+add installation command here.
+
+## Quick start:
+
+Load the package into R session.
+```{r Load, message=FALSE}
+ library(enrichmotifpairR)
+```
+
+The enrichmotifpairR package includes an example dataset called peak_data.
+```{r}
+data(peak_data)
+```
+
+```{r, eval=TRUE}
+set.seed(109)
+data_results <- findEnrichMotifPair(peak_data[1:1000, ], background_data = NULL,
+  genome_ver = "hg38", scramble_data = TRUE,
+  motif_database = "JASPAR")
+```
+
