@@ -2,7 +2,7 @@
 % Please edit documentation in R/generateBackgroundSeqs.R
 \name{generateBackgroundSeqs}
 \alias{generateBackgroundSeqs}
-\title{Finds GC and length matched random genomic sequences}
+\title{Finds GC, length and chromosome matched random genomic sequences}
 \usage{
 generateBackgroundSeqs(
   input_data,
@@ -29,11 +29,10 @@ generated}
 A GRanges object with coordinates
 }
 \description{
-Finds GC and length matched random genomic sequences
+Finds GC, length and chromosome matched random genomic sequences
 }
 \examples{
 \dontrun{
-generateBackgroundSeqs(input_data, genome_ver = "hg38",
-xfold = 1, batchsize = 10000, nMaxTrials = 50)
+generateBackgroundSeqs(input_data, genome_ver = "hg38")
 }
 }

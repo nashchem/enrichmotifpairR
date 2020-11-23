@@ -4,14 +4,16 @@
 \name{peak_data}
 \alias{peak_data}
 \title{Enhancer peak coordinates}
-\format{A data frame with 13051 rows and 4 variables:
+\format{
+A data frame with 13051 rows and 4 variables:
 \describe{
   \item{chr}{chromosome in hg38}
   \item{start}{start in hg38}
   \item{end}{end in hg38}
   \item{peakid}{peak identifier}
   ...
-}}
+}
+}
 \usage{
 peak_data
 }

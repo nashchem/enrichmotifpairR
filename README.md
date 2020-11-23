@@ -1,28 +1,11 @@
-Introduction:
--------------
+## Introduction
 
-Add text here.
+The identification and differential enrichment of transcription factor
+(TF) motifs in a given set of genomic regions relative to control
+regions is a common task in regulatory genomics. Here, we present
+enrichmotifpairR, an R package for identification of differentially
+enriched TF motifs and their binding partner motifs, or enriched motif
+pairs, in a given set of genomic regions relative to a control set of
+genomic regions.
 
-Installation:
--------------
-
-Install the package from Github.
-
-add installation command here.
-
-Quick start:
-------------
-
-Load the package into R session.
-
-     library(enrichmotifpairR)
-
-The enrichmotifpairR package includes an example dataset called
-peak\_data.
-
-    data(peak_data)
-
-    set.seed(109)
-    data_results <- findEnrichMotifPair(peak_data[1:1000, ], background_data = NULL,
-      genome_ver = "hg38", scramble_data = TRUE,
-      motif_database = "JASPAR")
+![enrichmotifpairR framework](supple_Figure1.png)
