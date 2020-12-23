@@ -8,4 +8,39 @@ enriched TF motifs and their binding partner motifs, or enriched motif
 pairs, in a given set of genomic regions relative to a control set of
 genomic regions.
 
-![enrichmotifpairR framework](supple_Figure1.png)
+![enrichmotifpairR framework](supple_Figure1.png) 
+
+## Installation
+
+First install the dependency packages.
+
+``` r
+# install devtools and biocmanager if necessary
+if (!requireNamespace("BiocManager", quietly = TRUE))
+    install.packages(c("BiocManager", "devtools"))
+
+# other dependency packages
+BiocManager::install(c("GenomicRanges", "SummarizedExperiment", "motifmatchr", 
+                       "BiocGenerics", "Biostrings", "GenomeInfoDb", "IRanges",
+                       "TFBSTools", "S4Vectors", ""))
+
+# genome annotations
+BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg38"))
+
+# other packages
+install.packages(c("dplyr", "assertthat", "Matrix", "rlang"))
+```
+
+Next install the `enrichmotifpairR` package
+
+``` r
+# installation
+devtools::install_github("nashchem/enrichmotifpairR")
+
+# load
+library(enrichmotifpairR)
+```
+
+## Use case examples
+
+See the `vignettes` directory for several use case examples.
