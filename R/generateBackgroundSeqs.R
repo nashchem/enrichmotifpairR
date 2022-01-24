@@ -14,11 +14,11 @@
 #' }
 #' @export
 
-generateBackgroundSeqs <- function (input_data, genome_ver = "hg38", xfold = 1,
+generateBackgroundSeqs <- function(input_data, genome_ver = "hg38", xfold = 1,
                                     batchsize = 30000, nMaxTrials = 50) {
     random_data <- NULL
     # function to generate gc and length matched random regions per chromosome
-    generateBackgroundSeqs_per_chr <- function (input_data_chr, genome_ver = genome_ver, xfold = xfold,
+    generateBackgroundSeqs_per_chr <- function(input_data_chr, genome_ver = genome_ver, xfold = xfold,
                                                 batchsize = batchsize, nMaxTrials = nMaxTrials) {
         # borrowed from gkmSVM package and modified
         # checking input data and parameters
