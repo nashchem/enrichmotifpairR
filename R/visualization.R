@@ -127,7 +127,8 @@ plotNetwork <- function(enrich_pairs,
                         TF_name, 
                         color_TF = "#70d9e0", 
                         color_bind_TF = "#e841da"){
-  
+  enrich_pairs = results$motif_pair_enrich
+  TF_name = "BACH2"
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 == TF_name) %>% 
     group_by(TF_name_1, TF_name_2) %>% 
@@ -140,10 +141,10 @@ plotNetwork <- function(enrich_pairs,
     dplyr::mutate(sig = sig*8/max(sig)) %>% as.data.frame() %>% 
     dplyr::select(TF_name_1, TF_name_2, sig)
   
-  edges
+  n_edges = length(unique(c(edges$TF_name_1, edges$TF_name_2)))
   nodes <- data.frame(
     name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-    role=c(rep("TF",1),rep("partner", nrow(edges)))
+    role=c(rep("TF",1),rep("partner", n_edges - 1))
   )
   # Turn it into igraph object
   network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
@@ -153,11 +154,21 @@ plotNetwork <- function(enrich_pairs,
   # Create a vector of color
   my_color <- col[as.numeric(as.factor(igraph::V(network)$role))]
   # plotting the network
-  plot(network, vertex.color=col, vertex.shape = c("rectangle"), 
+  plot(network, vertex.color=my_color, vertex.shape = c("rectangle"), 
        vertex.size = 40, vertex.size2 = 30, vertex.label.cex=0.8, 
        vertex.label.color="black", edge.width=igraph::E(network)$sig, 
        edge.color="black")
 }
+
+install.packages('extrafont')
+library(extrafont)
+font_addpackage(pkg = "serif")
+fonts_installed <- fonts()
+df_font <- fonttable()
+loadfonts()
+font_paths()
+
+
 
 
 
