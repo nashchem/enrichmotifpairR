@@ -15,12 +15,8 @@
 #' @export
 #' 
 plotEnrichment = function(enrich_motifs, 
-                          tfs,
-                          metric = "pval"){
-  
-  if (metric == "pval"){
-    metric = "pval_adj"
-  }
+                          tfs
+                          ){
   
   # filter for these selected TFs
   enrich_motifs_filtered <- enrich_motifs %>% 
@@ -30,20 +26,18 @@ plotEnrichment = function(enrich_motifs,
   
   # replace very low values so that it is easy to visualize
   enrich_motifs_filtered[enrich_motifs_filtered < 1e-100] <- 1e-100
+
+  enrich_motifs_filtered$log10FC = log10(enrich_motifs_filtered$fold_enrich)
   
-  enrich_motifs_filtered$logp = -log(enrich_motifs_filtered$pval_adj)
-  enrich_motifs_filtered$logFC = log(enrich_motifs_filtered$fold_enrich)
+  enrich_motifs_filtered = dplyr::arrange(enrich_motifs_filtered, log10FC)
+  enrich_motifs_filtered$TF_name <- factor(enrich_motifs_filtered$TF_name, 
+                                           levels = enrich_motifs_filtered$TF_name)
   
-  if (metric == "pval_adj"){
-    hm_value = "logp"
-  } else {hm_value = "logFC"}
-  
-  enrich_motifs_filtered$x <- NA
   # choose color palette
   col_pal <- RColorBrewer::brewer.pal(9,"Blues")
   # enriched motifs heatmap using ggplot2
-  gg <- ggplot(data = enrich_motifs_filtered, aes_string(x = NA, y = "TF_name", 
-                                                  fill = hm_value))  + 
+  ggplot(data = enrich_motifs_filtered, aes_string(x = NA, y = "TF_name", 
+                                                  fill = "log10FC"))  + 
     geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
     ylab("") + xlab("") + theme_bw() + 
     theme(plot.background = element_blank()
@@ -51,7 +45,7 @@ plotEnrichment = function(enrich_motifs,
           ,panel.grid.minor = element_blank()
           ,text = element_text(size=16), axis.text.x = element_blank()
     )
-  return(gg)
+  
 }
 
 #' Plots the enrichment values of selected TFs.
@@ -71,42 +65,58 @@ plotEnrichment = function(enrich_motifs,
 #' @export
 #' 
 plotEnrichPair = function(enrich_pairs, 
-                          tfs,
-                          metric = "pval"){
-  
-  if (metric == "pval"){
-    metric = "pval_adj"
-  }
-  
+                          tfs
+                          ){
+
   # select top 10 binding partners and remove redundant motifs
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 %in% tfs) %>% 
     group_by(TF_name_1, TF_name_2) %>% 
     dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>% top_n(-10, pval_adj)
+    dplyr::group_by(TF_name_1) %>% dplyr::top_n(-10, pval_adj)
   
+  enrich_pairs_filtered$log10FC = log10(enrich_pairs_filtered$fold_enrich)
+ 
+  order = aggregate(enrich_pairs_filtered$log10FC, list(enrich_pairs_filtered$TF_name_1), FUN=mean) %>% 
+          dplyr::arrange(-x)
+  order_var = order$Group.1
   
-  # choose color palette
-  col_pal <- RColorBrewer::brewer.pal(9,"Blues")
-  # enriched motif pairs heaatmap using ggplot2
-  enrich_pairs_filtered$logp = -log(enrich_pairs_filtered$pval_adj)
-  enrich_pairs_filtered$logFC = log(enrich_pairs_filtered$fold_enrich)
+  enrich_pairs_filtered_mat <- enrich_pairs_filtered %>%
+    select(TF_name_1, TF_name_2, log10FC) %>%
+    tidyr::spread(TF_name_2, log10FC) %>% 
+    tibble::column_to_rownames(var = "TF_name_1") %>%
+    as.matrix() %>%
+    tidyr::replace_na(0) 
   
-  if (metric == "pval_adj"){
-    hm_value = "logp"
-  } else {hm_value = "logFC"}
+  #idx <- match(enrich_pairs_filtered$TF_name, rownames(enrich_pairs_filtered_mat))
+  #enrich_pairs_filtered_mat <- na.omit(enrich_pairs_filtered_mat[idx, ])
   
-  gg <- ggplot(data = enrich_pairs_filtered, 
-               aes_string(x = "TF_name_2", y = "TF_name_1", fill = hm_value)) + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
+ 
+  col_pal <- c("white", RColorBrewer::brewer.pal(9,"Reds"))
+  heatmap = pheatmap::pheatmap(enrich_pairs_filtered_mat, cluster_rows=F, cluster_cols=T, silent = T)
+  cluster_order = heatmap$tree_col$order
+  enrich_pairs_filtered_mat <- enrich_pairs_filtered_mat[order_var, cluster_order]
+  
+  if (length(tfs) > 1){
+    enrich_pairs_melt = suppressWarnings(reshape2::melt(enrich_pairs_filtered_mat))
+  } else {
+    enrich_pairs_melt = data.frame(tf1 = rep(tfs, length(enrich_pairs_filtered_mat)),
+                                   tf2 = names(enrich_pairs_filtered_mat),
+                                   value = as.numeric(enrich_pairs_filtered_mat))
+  }
+  
+  colnames(enrich_pairs_melt) = c("TF_name_1", y = "TF_name_2", "log10FC")
+  ggplot(data = enrich_pairs_melt,
+               aes_string(x = "TF_name_2", y = "TF_name_1", fill = "log10FC")) +
+    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) +
+    ylab("") + xlab("") + theme_bw() +
     theme(plot.background = element_blank()
           ,panel.grid.major = element_blank()
           ,panel.grid.minor = element_blank()
           ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
     )
   
-  return(gg)
+  #return(gg)
 }
 
 #' Plots network of TF enrichment interactions.
@@ -127,13 +137,13 @@ plotNetwork <- function(enrich_pairs,
                         TF_name, 
                         color_TF = "#70d9e0", 
                         color_bind_TF = "#e841da"){
-  enrich_pairs = results$motif_pair_enrich
-  TF_name = "BACH2"
+  
+  
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 == TF_name) %>% 
     group_by(TF_name_1, TF_name_2) %>% 
     dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>% top_n(-10, pval_adj)
+    dplyr::group_by(TF_name_1) %>% dplyr::top_n(-10, pval_adj)
   
   edges <- enrich_pairs_filtered %>% 
     dplyr::filter(TF_name_1 == TF_name) %>% 
@@ -144,7 +154,7 @@ plotNetwork <- function(enrich_pairs,
   n_edges = length(unique(c(edges$TF_name_1, edges$TF_name_2)))
   nodes <- data.frame(
     name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-    role=c(rep("TF",1),rep("partner", n_edges - 1))
+    role=c(rep("TF", 1), rep("partner", n_edges - 1))
   )
   # Turn it into igraph object
   network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
@@ -154,20 +164,10 @@ plotNetwork <- function(enrich_pairs,
   # Create a vector of color
   my_color <- col[as.numeric(as.factor(igraph::V(network)$role))]
   # plotting the network
-  plot(network, vertex.color=my_color, vertex.shape = c("rectangle"), 
-       vertex.size = 40, vertex.size2 = 30, vertex.label.cex=0.8, 
-       vertex.label.color="black", edge.width=igraph::E(network)$sig, 
-       edge.color="black")
+  sig = igraph::E(network)$sig
+  GGally::ggnet2(network, node.size = 12, node.color=my_color, edge.color = "grey",
+         label = T, edge.size=log(sig), label.size = 9)
 }
-
-install.packages('extrafont')
-library(extrafont)
-font_addpackage(pkg = "serif")
-fonts_installed <- fonts()
-df_font <- fonttable()
-loadfonts()
-font_paths()
-
 
 
 

@@ -1,6 +1,7 @@
 library(shiny)
 library(enrichmotifpairR)
 library(DT)
+data("example_peaks_data")
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(
@@ -17,6 +18,7 @@ ui <- fluidPage(
     sidebarPanel(
         
         # Inputs
+        checkboxInput("example", "Use example dataset: DHS peaks from ESCs", FALSE),
         fileInput("target_data", 
                   "Upload target peaks file (BED)",
                   multiple = FALSE,
@@ -50,6 +52,7 @@ ui <- fluidPage(
                      ),
             tabPanel("Heatmap", 
                      h5("Visualize top enriched binding partners for a set of TFs"),
+                     uiOutput("get_heatmap"),
                      plotOutput("enrichmentpair"),
                      textAreaInput("tfs", "Input TFs (one per line)"), 
                      textOutput("enrichment")
@@ -57,6 +60,7 @@ ui <- fluidPage(
                     
             tabPanel("Network", 
                      h5("Visualize a network of all binding partners for a TF"),
+                     uiOutput("get_network"),
                      plotOutput("enrichmentnetwork"),
                      textAreaInput("tf", "Input TF")
                      )
@@ -68,6 +72,17 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output){
+    observeEvent({input$example},
+                 if(input$example == T){
+                     removeUI(
+                         selector = "div:has(> #background)",
+                         immediate = T,
+                         multiple = T
+                     )
+                     
+                 }
+    )
+    
     observeEvent({input$background},
                  if(input$background == T){
                      insertUI(
@@ -84,8 +99,6 @@ server <- function(input, output){
     
     run_motifs = reactiveValues(tmp=NULL)
     enrich_motifs <- eventReactive(input[["submit_loc"]], {
-        df_target <- data.table::fread(input$target_data$datapath)
-        colnames(df_target) = c("chr", "start", "end")
         
         # Create a Progress object
         progress <- shiny::Progress$new()
@@ -94,14 +107,28 @@ server <- function(input, output){
         prog = 0
         progress$set(message = "Initializing", value = prog)
         
-        if (input$background == T){
-            df_background <- data.table::fread(input$background_data$datapath)
-            colnames(df_background) = c("chr", "start", "end")
-        } else {
-            progress$set(message = "Generating background peaks", value = 0)
-            df_background = NULL
+        if (input$example == F){
+            df_target <- data.table::fread(input$target_data$datapath)
+            colnames(df_target) = c("chr", "start", "end")
+            
+           
+            
+            if (input$background == T){
+                df_background <- data.table::fread(input$background_data$datapath)
+                colnames(df_background) = c("chr", "start", "end")
+            } else {
+                progress$set(message = "Generating background peaks", value = 0)
+                df_background = NULL
+                prog <- prog + 0.5
+            }
+        }
+        
+        if (input$example == T){
+            df_target = example_peaks_data$`H1-ESC_DHS_peaks`
+            df_background = example_peaks_data$`H1-ESC_DHS_peaks_matched_background`
             prog <- prog + 0.5
         }
+        
         Sys.sleep(5.0)
         
         progress$set(message = "Finding motif pairs", value = prog)
@@ -132,29 +159,33 @@ server <- function(input, output){
         enrich_motifs()[[2]]
     })
     
-    # output$enrichment = renderPlot({
-    #     plotEnrichment(enrich_motifs()[[1]], input$tfs)
-    #     }
-    # )
-    
-    output$enrichmentpair = renderPlot({
+    plotHeatmapInput <- reactive({
         req(input$tfs)
         input_tfs <- input$tfs
         input_tfs_split <- unlist(strsplit(input_tfs, "\n"))
-        plotEnrichPair(enrich_pairs, input_tfs_split)
+        plotEnrichPair(enrich_motifs()[[2]], input_tfs_split)
+    })
+    
+    output$enrichmentpair = renderPlot({
+        req(input$tfs)
+        print(plotHeatmapInput())
     }
     )
     
-    output$enrichmentnetwork = renderPlot({
+    plotNetworkInput = reactive({
         req(input$tf)
         plotNetwork(enrich_motifs()[[2]], TF_name = input$tf, 
                     color_TF = "#70d9e0", color_bind_TF = "#e841da")
     }
     )
     
+    output$enrichmentnetwork = renderPlot({
+        req(input$tf)
+        print(plotNetworkInput())
+    }
+    )
     
-    #output$enrichment = renderText({input$tfs})
-   
+ 
    
     output$get_the_item1 <- renderUI({
         req(run_motifs$tmp)
@@ -163,6 +194,14 @@ server <- function(input, output){
     output$get_the_item2 <- renderUI({
         req(run_motifs$tmp)
         downloadButton('downloadData2', label = 'Enriched Pairs')})
+    
+    output$get_heatmap <- renderUI({
+        req(run_motifs$tmp)
+        downloadButton('downloadHeatmap', label = 'Download Image')})
+    
+    output$get_network <- renderUI({
+        req(run_motifs$tmp)
+        downloadButton('downloadNetwork', label = 'Download Image')})
     
     output$downloadData1 <- downloadHandler(
         filename = function() {
@@ -182,6 +221,34 @@ server <- function(input, output){
         }
     )
     
+    output$downloadHeatmap <- downloadHandler(
+        filename = function() {
+            paste(input$target_data, "_enrichment_heatmap.pdf", sep = "")
+        },
+        content = function(file) {
+            pdf(file)
+            print(plotHeatmapInput())
+            dev.off()
+        }
+    )
+    
+    output$downloadNetwork <- downloadHandler(
+        filename = function() {
+            paste(input$target_data, "_network.pdf", sep = "")
+        },
+        content = function(file) {
+            
+            # device <- function(..., width, height) {
+            #     grDevices::png(..., width = width, height = height,
+            #                    res = 300, units = "in")
+            # }
+
+            pdf(file)
+            print(plotNetworkInput())
+            dev.off()
+        
+        }
+    )
 }
 
 # Run the application 
