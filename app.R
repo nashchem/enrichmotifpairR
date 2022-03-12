@@ -3,7 +3,7 @@ library(enrichmotifpairR)
 library(DT)
 data("example_peaks_data")
 
-# Define UI for application that draws a histogram
+# Define UI 
 ui <- fluidPage(
     
     # Application title
@@ -70,7 +70,7 @@ ui <- fluidPage(
 
 
 
-# Define server logic required to draw a histogram
+# Define server logic
 server <- function(input, output){
     observeEvent({input$example},
                  if(input$example == T){
