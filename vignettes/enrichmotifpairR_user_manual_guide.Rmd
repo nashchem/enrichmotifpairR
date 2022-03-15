@@ -22,20 +22,21 @@ knitr::opts_chunk$set(
 )
 ```
 ## Quick start
-```{r quickstart1, eval=FALSE}
+```{r quickstart1, eval=T}
 # load the package and other useful packages
 library(enrichmotifpairR)
 # load the example data provided with package
 data("example_peaks_data")
+source("https://raw.github.com/nashchem/enrichmotifpairR/R/visualization.R")
 ```
 ## Finding enriched TF motifs and their binding partners in H1-ESC at DHS peaks
-```{r H1_ESC_1, eval=FALSE}
+```{r H1_ESC_1, eval=T}
 # Finding the enriched motifs and their partners
 results <- findEnrichMotifPair(
   target_data = example_peaks_data$`H1-ESC_DHS_peaks`,
   background_data = example_peaks_data$`H1-ESC_DHS_peaks_matched_background`,
   genome_ver = "hg38",
-  scramble_data = FALSE,
+  scramble_data = F,
   motif_database = "ENCODE",
   Pvalue_computation = "hyper",
   Pvalue_threshold = 0.01,
@@ -52,11 +53,11 @@ library(ggplot2)
 library(igraph)
 options(digits = 8)
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
-# load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("H1_DHS_ENCODE_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# # load the results data
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("H1_DHS_ENCODE_motif_pairs_results.rda")
 ```
 The enriched TF motifs are stored in the `results$motif_enrich` and their 
 binding partners in the `results$motif_pair_enrich`.
@@ -64,30 +65,17 @@ binding partners in the `results$motif_pair_enrich`.
 ```{r H1_ESC_3, eval=TRUE}
 # assign the results data to individual objects
 enrich_motifs <- results$motif_enrich
-enrich_motifs[enrich_motifs < 1e-100] <- 1e-100
-enrich_motifs <- enrich_motifs %>%
-    mutate(`-log10(pval_adj)` = -log10(pval_adj))
-# The output of the enriched motifs top five 
-enrich_motifs %>% head(5) %>% arrange(desc(fold_enrich)) %>% 
-    select(motif_name, TF_name, tg_motif_count, bg_motif_count, 
-           fold_enrich, `-log10(pval_adj)`) %>%
-    kable(., caption="Top 5 enriched motifs")
-
 enrich_motif_pairs <- results$motif_pair_enrich
-enrich_motif_pairs[enrich_motif_pairs < 1e-100] <- 1e-100
-enrich_motif_pairs <- enrich_motif_pairs %>%
-    mutate(`-log10(pval_adj)` = -log10(pval_adj))
-
+# The output of the enriched motifs top five 
+enrich_motifs %>% head(5) %>% kable(., caption="Top 5 enriched motifs")
 # The output of the enriched motif pairs, top five binding partners for **NFY** 
-enrich_motif_pairs %>% head(5) %>% arrange(desc(fold_enrich)) %>%
-    select(motif_name_1, TF_name_1, motif_name_2, TF_name_2, 
-           fold_enrich, `-log10(pval_adj)`) %>% 
+enrich_motif_pairs %>% head(5) %>% 
     kable(., caption="Top 5 binding partners for NFY")
-
 ```
 
-
 Before interpreting these results, either enriched TF motifs or their binding partners we strongly recommend to filter them based on their expression level, for instance at RPKM (FPKM) or TPM > 1. Next, we can choose selected TFs that are known to be involved based on prior knowledge or highly enriched ones. If you are interested to filter for only TF genes as defined by [Lambert et al., 2018](https://pubmed.ncbi.nlm.nih.gov/29425488/), you can do so as well. 
+
+Now we can visualize the enriched motifs and enriched motif pairs using heatmaps.
 
 ```{r H1_ESC_4, eval=TRUE, fig.width=4, fig.height=6}
 # Select TFs for visualization. These are some well known TFs in 
@@ -97,175 +85,40 @@ TF_list <- c("SOX2", "NANOG", "MYC", "POU5F1", "STAT3", "TCF3", "KLF4", "SMAD1",
              "KLF4", "KLF5", "ELF5", "ESRRB", "PRDM14", "DPPA4", "FOXC2", 
              "FOXD3", "FOXF1", "GATA", "GBX2", "MAF", "MEF2C", "MAX", "JUN", 
              "MIXL1", "NFKB", "PAX2", "PAX6", "SNAI1", "TBX6", "SUZ12")
-# filter for these selected TFs
-enrich_motifs_filtered <- enrich_motifs %>% 
-    dplyr::filter(TF_name %in% TF_list) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE) %>%
-    arrange(desc(`-log10(pval_adj)`))
 
-# get the list of TFs genes
-TF_df <- TF_df %>% dplyr::filter(TF_Yes_No == "Yes")
-
-# filter TFs motifs for only TFs genes based on Lambert et al., 2018
-enrich_motifs_filtered <- enrich_motifs_filtered %>% 
-    dplyr::filter(TF_name %in% TF_df$Name) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE)
+# Plot motif enrichment heatmap
+plotEnrichment(enrich_motifs = enrich_motifs,
+               tfs = TF_list)
 
 ```
-
-Now we can visualize the enriched motifs and enriched motif pairs using heatmaps.
-
-```{r H1_ESC_4_1, eval=TRUE, fig.width=4, fig.height=6}
-# replace very low values so that it is easy to visualize
-# enrich_motifs_filtered[enrich_motifs_filtered < 1e-100] <- 1e-100
-
-# keep the order in plotting, by default ggplot2 sorts alphabetically
-enrich_motifs_filtered <- enrich_motifs_filtered %>%
-    mutate(TF_name = factor(TF_name, levels = rev(unique(TF_name))))
-
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motifs heatmap using ggplot2
-pp <- ggplot(data = enrich_motifs_filtered, aes(x = "", y = TF_name, 
-                                                fill = `-log10(pval_adj)`))  + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
-```
-
-**Using another color palette**
-```{r H1_ESC_4_2, eval=TRUE, fig.width=4, fig.height=6}
-# choose color palette from wesanderson
-# Gradient color
-col_pal <- wesanderson::wes_palette("Cavalcanti1", 100, type = "continuous")
-
-# enriched motifs heaatmap using ggplot2
-pp <- ggplot(data = enrich_motifs_filtered, aes(x = "", y = TF_name, 
-                                                fill = `-log10(pval_adj)`))  + 
-    geom_tile() + scale_fill_gradientn(colours = col_pal) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
-```
-
-**Using another color palette**
-```{r H1_ESC_4_3, eval=TRUE, fig.width=4, fig.height=6}
-# choose color palette from wesanderson
-# Gradient color
-col_pal <- colorRampPalette(rev(brewer.pal(n = 7, name =
-  "RdYlBu")))(100)
-
-# enriched motifs heaatmap using ggplot2
-pp <- ggplot(data = enrich_motifs_filtered, aes(x = "", y = TF_name, 
-                                                fill = `-log10(pval_adj)`))  + 
-    geom_tile() + scale_fill_gradientn(colours = col_pal) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
-```
-
-
 
 Now plot the top 10 binding partners for the above TF motifs.
 
 ```{r H1_ESC_5, eval=TRUE, fig.width=12, fig.height=6}
-# filter TFs motifs for only TFs genes based on Lambert et al., 2018
-enrich_motif_pairs_filtered <- enrich_motif_pairs %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>%
-    dplyr::filter(TF_name_1 %in% TF_df$Name) %>%
-    dplyr::filter(TF_name_2 %in% TF_df$Name)
-# select top 10 binding partners and remove redundant motifs
-enrich_motif_pairs_filtered <- enrich_motif_pairs_filtered %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>% top_n(10, -pval_adj)
 
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motif pairs heaatmap using ggplot2
-# pp <- ggplot(data = enrich_motif_pairs_filtered, 
-#              aes(x = TF_name_2, y = TF_name_1, fill = -log(pval_adj))) + 
-#     geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-#     ylab("") + xlab("") + theme_bw() + 
-#     theme(plot.background = element_blank()
-#     ,panel.grid.major = element_blank()
-#     ,panel.grid.minor = element_blank()
-#     ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-# )
-# pp
-
-enrich_motif_pairs_filtered_mat <- enrich_motif_pairs_filtered %>%
-    select(TF_name_1, TF_name_2, `-log10(pval_adj)`) %>%
-    tidyr::spread(TF_name_2, `-log10(pval_adj)`) %>% 
-    tibble::column_to_rownames(var = "TF_name_1") %>%
-    as.matrix() %>%
-    tidyr::replace_na(0)
-
-# get the order consistent with "enrich_motifs_filtered"
-idx <- match(enrich_motifs_filtered$TF_name, rownames(enrich_motif_pairs_filtered_mat))
-enrich_motif_pairs_filtered_mat <- enrich_motif_pairs_filtered_mat[idx, ]
-pheatmap::pheatmap(enrich_motif_pairs_filtered_mat, cluster_rows=FALSE, cluster_cols=TRUE, na_col = "grey", angle_col = 45)
+plotEnrichPair(enrich_pairs = enrich_motif_pairs,
+               tfs = TF_list)
 
 ```
 
-Now we can make colorful networks for select TFs of interest using the `igraph` package
+Now we can make colorful networks for select TFs of interest
 
 ```{r H1_ESC_6, eval=TRUE, fig.width=6, fig.height=6}
-# create a custom function for plotting networks
-plot_network <- function(enrich_motif_pairs_filtered, TF_name = TF_name, 
-                         color_TF = "#70d9e0", color_bind_TF = "#e841da"){
-    edges <- enrich_motif_pairs_filtered %>% 
-        dplyr::filter(TF_name_1 == TF_name) %>% 
-    dplyr::mutate(sig = -log(pval_adj)) %>% 
-    dplyr::mutate(sig = sig*8/max(sig)) %>% as.data.frame() %>% 
-    dplyr::select(TF_name_1, TF_name_2, sig)
-nodes <- data.frame(
-  name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-  role=c(rep("TF",1),rep("partner", nrow(edges)))
-)
-# Turn it into igraph object
-network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
-                                         directed=FALSE) 
-# Make a palette of 3 colors
-library(RColorBrewer)
-# col  <- brewer.pal(3, "Set1")[1:2] 
-col <- c(color_TF, color_bind_TF)
-# Create a vector of color
-my_color <- col[as.numeric(as.factor(igraph::V(network)$role))]
-# plotting the network
-plot(network, vertex.color=my_color, vertex.shape = c("rectangle"), 
-     vertex.size = 40, vertex.size2 = 30, vertex.label.cex=0.8, 
-     vertex.label.color="black", edge.width=igraph::E(network)$sig, 
-     edge.color="black")
-}
+
 # select TF "SOX2" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "SOX2", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "SOX2"
+            )
 
 # select TF "NANOG" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "NANOG", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "NANOG"
+            )
 
 # select TF "KLF4" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "KLF4", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "KLF4"
+            )
 
 ```
 
@@ -289,11 +142,11 @@ results <- findEnrichMotifPair(
 
 ```{r Th17_treated_vs_untreated_2, echo=FALSE, warning=FALSE, message=FALSE}
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
 # load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("Th17_treated_vs_non_treated_ATAC_ENCODE_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("Th17_treated_vs_non_treated_ATAC_ENCODE_motif_pairs_results.rda")
 ```
 
 Assign the resulting data to individual objects and filter motifs for only TFs genes. TF genes are defined by [Lambert et al., 2018](https://pubmed.ncbi.nlm.nih.gov/29425488/).
@@ -304,101 +157,46 @@ enrich_motifs <- results$motif_enrich
 enrich_motif_pairs <- results$motif_pair_enrich
 # get the list of TFs genes
 TF_df <- TF_df %>% dplyr::filter(TF_Yes_No == "Yes")
-# filter TFs motifs for only TFs genes based on Lambert et al., 2018
-enrich_motifs_filtered <- enrich_motifs %>% 
-    dplyr::filter(TF_name %in% TF_df$Name) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE)
-enrich_motif_pairs_filtered <- enrich_motif_pairs %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>%
-    dplyr::filter(TF_name_1 %in% TF_df$Name) %>%
-    dplyr::filter(TF_name_2 %in% TF_df$Name)
+
 
 ```
 
 **Plot the heatmap of enriched TF motifs**
 
 ```{r Th17_treated_vs_untreated_4, eval=TRUE, fig.width=4, fig.height=6}
-# Select TFs for visualization , here we have only 14 TFs and plotting them all
-enrich_motifs_filtered[enrich_motifs_filtered < 1e-50] <- 1e-50
+# get the list of TFs genes, here we have only 14 TFs and plotting them all 
+TF_df <- TF_df %>% dplyr::filter(TF_Yes_No == "Yes") %>% dplyr::filter(Name %in% enrich_motifs$TF_name)
 
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motifs heatmap using ggplot2
-pp <- ggplot(data = enrich_motifs_filtered, aes(x = "", y = TF_name, 
-                                                fill = -log(pval_adj)))  + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
+plotEnrichment(enrich_motifs = enrich_motifs,
+               tfs = TF_df$Name)
 ```
 
 **Now plot the binding partners for the above TF motifs**
 
 ```{r Th17_treated_vs_untreated_5, eval=TRUE, fig.width=12, fig.height=6}
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motif pairs heaatmap using ggplot2
-pp <- ggplot(data = enrich_motif_pairs_filtered, 
-             aes(x = TF_name_2, y = TF_name_1, fill = -log(pval_adj))) + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
+
+plotEnrichPair(enrich_pairs = enrich_motif_pairs,
+               tfs = TF_df$Name)
 ```
 
-Now we can make colorful networks for select TFs of interest using the `igraph` package.
+Now we can make colorful networks for select TFs of interest.
 
 ```{r Th17_treated_vs_untreated_6, eval=TRUE, fig.width=6, fig.height=6}
-# create a custom function for plotting networks
-plot_network <- function(enrich_motif_pairs_filtered, TF_name = TF_name, 
-                         color_TF = "#70d9e0", color_bind_TF = "#e841da"){
-    edges <- enrich_motif_pairs_filtered %>% 
-        dplyr::filter(TF_name_1 == TF_name) %>% 
-    dplyr::mutate(sig = -log(pval_adj)) %>% 
-    dplyr::mutate(sig = sig*8/max(sig)) %>% as.data.frame() %>% 
-    dplyr::select(TF_name_1, TF_name_2, sig)
-nodes <- data.frame(
-  name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-  role=c(rep("TF",1),rep("partner", nrow(edges)))
-)
-# Turn it into igraph object
-network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
-                                         directed=FALSE) 
-# Make a palette of 3 colors
-library(RColorBrewer)
-# col  <- brewer.pal(3, "Set1")[1:2] 
-col <- c(color_TF, color_bind_TF)
-# Create a vector of color
-my_color <- col[as.numeric(as.factor(igraph::V(network)$role))]
-# plotting the network
-plot(network, vertex.color=my_color, vertex.shape = c("rectangle"), 
-     vertex.size = 40, vertex.size2 = 30, vertex.label.cex=0.8, 
-     vertex.label.color="black", edge.width=igraph::E(network)$sig, 
-     edge.color="black")
-}
+  
 # select TF "BACH2" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "BACH2", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "BACH2"
+            )
 
 # select TF "TCF12" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "TCF12", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "TCF12"
+            )
 
 # select TF "HOXA5" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "HOXA5", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
-
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "HOXA5"
+            )
 ```
 
 ### Example use case 2: Genomic regions from two conditions
@@ -420,11 +218,11 @@ results <- findEnrichMotifPair(
 
 ```{r Th1_vs_Th0_2, echo=FALSE, warning=FALSE, message=FALSE}
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
-# load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("Th1_vs_Th0_ATAC_CISBP_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# # load the results data
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("Th1_vs_Th0_ATAC_CISBP_motif_pairs_results.rda")
 ```
 
 Assign the resulting data to individual objects and filter motifs for only TFs genes. TF genes are defined by [Lambert et al., 2018](https://pubmed.ncbi.nlm.nih.gov/29425488/).
@@ -439,115 +237,44 @@ TF_list <- unique(sort(c("STAT1", "STAT3", "STAT4", "STAT5A", "STAT5B", "ATF3",
                          "NFATC3", "NFATC4", "SRF", "RUNX3", "IRF1", "IRF6", 
                          "ETV5")))
 
-# filter for these selected TFs
-enrich_motifs_filtered <- enrich_motifs %>% 
-    dplyr::filter(TF_name %in% TF_list) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE)
-
-# get the list of TFs genes
-TF_df <- TF_df %>% dplyr::filter(TF_Yes_No == "Yes")
-
-# filter TFs motifs for only TFs genes based on Lambert et al., 2018
-enrich_motifs_filtered <- enrich_motifs_filtered %>% 
-    dplyr::filter(TF_name %in% TF_df$Name) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE)
-
-enrich_motif_pairs_filtered <- enrich_motif_pairs %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>%
-    dplyr::filter(TF_name_1 %in% TF_df$Name) %>%
-    dplyr::filter(TF_name_2 %in% TF_df$Name)
-
-# select top 15 binding partners and remove redundant motifs
-enrich_motif_pairs_filtered <- enrich_motif_pairs_filtered %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>% top_n(15, -pval_adj)
-
 ```
 
 **Plot the heatmap of enriched TF motifs**
 
 ```{r Th1_vs_Th0_4, eval=TRUE, fig.width=4, fig.height=6}
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motifs heatmap using ggplot2
-pp <- ggplot(data = enrich_motifs_filtered, aes(x = "", y = TF_name, 
-                                                fill = -log(pval_adj)))  + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
+
+plotEnrichment(enrich_motifs = enrich_motifs,
+               tfs = TF_list)
+
 ```
 
 Now plot the binding partners for the above TF motifs.
 
 ```{r Th1_vs_Th0_5, eval=TRUE, fig.width=12, fig.height=6}
-# replace very low values so that it is easy to visualize
-enrich_motif_pairs_filtered[enrich_motif_pairs_filtered < 1e-100] <- 1e-100
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motif pairs heatmap using ggplot2
-pp <- ggplot(data = enrich_motif_pairs_filtered, 
-             aes(x = TF_name_2, y = TF_name_1, fill = -log(pval_adj))) + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
+
+plotEnrichPair(enrich_pairs = enrich_motif_pairs,
+               tfs = TF_list)
+
 ```
 
 **Now we can make colorful networks for select TFs of interest using the `igraph` package**.
 
 ```{r Th1_vs_Th0_6, eval=TRUE, fig.width=6, fig.height=6}
-# create a custom function for plotting networks
-plot_network <- function(enrich_motif_pairs_filtered, TF_name = TF_name, 
-                         color_TF = "#70d9e0", color_bind_TF = "#e841da"){
-    edges <- enrich_motif_pairs_filtered %>% 
-        dplyr::filter(TF_name_1 == TF_name) %>% 
-    dplyr::mutate(sig = -log(pval_adj)) %>% 
-    dplyr::mutate(sig = sig*8/max(sig)) %>% as.data.frame() %>% 
-    dplyr::select(TF_name_1, TF_name_2, sig)
-nodes <- data.frame(
-  name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-  role=c(rep("TF",1),rep("partner", nrow(edges)))
-)
-# Turn it into igraph object
-network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
-                                         directed=FALSE) 
-# Make a palette of 3 colors
-library(RColorBrewer)
-# col  <- brewer.pal(3, "Set1")[1:2] 
-col <- c(color_TF, color_bind_TF)
-# Create a vector of color
-my_color <- col[as.numeric(as.factor(igraph::V(network)$role))]
-# plotting the network
-plot(network, vertex.color=my_color, vertex.shape = c("rectangle"), 
-     vertex.size = 40, vertex.size2 = 30, vertex.label.cex=0.8, 
-     vertex.label.color="black", edge.width=igraph::E(network)$sig, 
-     edge.color="black")
-}
+
 # select TF "STAT1" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "STAT1", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs,
+            TF_name = "STAT1"
+            )
 
 # select TF "ATF3" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "ATF3", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs,
+            TF_name = "ATF3"
+            )
 
 # select TF "HAND1" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "HAND1", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs,
+            TF_name = "HAND1"
+            )
 
 ```
 
@@ -571,11 +298,11 @@ results <- findEnrichMotifPair(
 
 ```{r CD8_H3K27ac_vs_H3K27me3_2, echo=FALSE, warning=FALSE, message=FALSE}
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
-# load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("CD8_H3K27ac_vs_H3K27me3_JASPAR_CORE_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# # load the results data
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("CD8_H3K27ac_vs_H3K27me3_JASPAR_CORE_motif_pairs_results.rda")
 ```
 
 Assign the resulting data to individual objects and filter motifs for only TFs genes. TF genes are defined by [Lambert et al., 2018](https://pubmed.ncbi.nlm.nih.gov/29425488/).
@@ -592,119 +319,48 @@ TF_list <- unique(sort(c("PRDM1", "TBX21", "TBX20", "EOMES", "BLIMP1", "ESRRB",
                          "IRF4", "REL", "TCF1", "TCF7", "IRF4", "TCF4", "EBF1", 
                          "MAF", "ETS2", "RUNX3")))
 
-# filter for these selected TFs
-enrich_motifs_filtered <- enrich_motifs %>% 
-    dplyr::filter(TF_name %in% TF_list) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE)
-
-# get the list of TFs genes
-TF_df <- TF_df %>% dplyr::filter(TF_Yes_No == "Yes")
-
-# filter TFs motifs for only TFs genes based on Lambert et al., 2018
-enrich_motifs_filtered <- enrich_motifs_filtered %>% 
-    dplyr::filter(TF_name %in% TF_df$Name) %>% 
-    dplyr::distinct(TF_name, .keep_all = TRUE)
-
-enrich_motif_pairs_filtered <- enrich_motif_pairs %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>%
-    dplyr::filter(TF_name_1 %in% TF_df$Name) %>%
-    dplyr::filter(TF_name_2 %in% TF_df$Name)
-
-# select top 10 binding partners and remove redundant motifs
-enrich_motif_pairs_filtered <- enrich_motif_pairs_filtered %>% 
-    dplyr::filter(motif_name_1 %in% enrich_motifs_filtered$motif_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
-    dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
-    dplyr::group_by(TF_name_1) %>% top_n(10, -pval_adj)
-
 ```
 
 **Plot the heatmap of enriched TF motifs**
 
 ```{r CD8_H3K27ac_vs_H3K27me3_4, eval=TRUE, fig.width=4, fig.height=6}
 # replace very low values so that it is easy to visualize
-enrich_motifs_filtered[enrich_motifs_filtered < 1e-300] <- 1e-300
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motifs heatmap using ggplot2
-pp <- ggplot(data = enrich_motifs_filtered, aes(x = "", y = TF_name, 
-                                                fill = -log(pval_adj)))  + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
+enrich_motifs[enrich_motifs < 1e-300] <- 1e-300
+
+plotEnrichment(enrich_motifs = enrich_motifs,
+               tfs = TF_list)
 ```
 
 **Now plot the binding partners for the above TF motifs**
 
 ```{r CD8_H3K27ac_vs_H3K27me3_5, eval=TRUE, fig.width=12, fig.height=6}
 # replace very low values so that it is easy to visualize
-enrich_motif_pairs_filtered[enrich_motif_pairs_filtered < 1e-100] <- 1e-100
-# choose color palette
-col_pal <- brewer.pal(9,"Blues")
-# enriched motif pairs heaatmap using ggplot2
-pp <- ggplot(data = enrich_motif_pairs_filtered, 
-             aes(x = TF_name_2, y = TF_name_1, fill = -log(pval_adj))) + 
-    geom_tile() + scale_fill_gradient(low = col_pal[1], high = col_pal[9]) + 
-    ylab("") + xlab("") + theme_bw() + 
-    theme(plot.background = element_blank()
-    ,panel.grid.major = element_blank()
-    ,panel.grid.minor = element_blank()
-    ,text = element_text(size=16), axis.text.x = element_text(angle=90, vjust=0.5)
-)
-pp
+enrich_motif_pairs[enrich_motif_pairs < 1e-100] <- 1e-100
+
+plotEnrichPair(enrich_pairs = enrich_motif_pairs,
+               tfs = TF_list)
+
 ```
 
 
 **Now we can make colorful networks for select TFs of interest using the `igraph` package**.
 
 ```{r CD8_H3K27ac_vs_H3K27me3_6, eval=TRUE, fig.width=6, fig.height=6}
-# create a custom function for plotting networks
-plot_network <- function(enrich_motif_pairs_filtered, TF_name = TF_name, 
-                         color_TF = "#70d9e0", color_bind_TF = "#e841da"){
-    edges <- enrich_motif_pairs_filtered %>% 
-        dplyr::filter(TF_name_1 == TF_name) %>% 
-    dplyr::mutate(sig = -log(pval_adj)) %>% 
-    dplyr::mutate(sig = sig*8/max(sig)) %>% as.data.frame() %>% 
-    dplyr::select(TF_name_1, TF_name_2, sig)
-nodes <- data.frame(
-  name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-  role=c(rep("TF",1),rep("partner", nrow(edges)))
-)
-# Turn it into igraph object
-network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
-                                         directed=FALSE) 
-# Make a palette of 3 colors
-library(RColorBrewer)
-# col  <- brewer.pal(3, "Set1")[1:2] 
-col <- c(color_TF, color_bind_TF)
-# Create a vector of color
-my_color <- col[as.numeric(as.factor(igraph::V(network)$role))]
-# plotting the network
-plot(network, vertex.color=my_color, vertex.shape = c("rectangle"), 
-     vertex.size = 40, vertex.size2 = 30, vertex.label.cex=0.8, 
-     vertex.label.color="black", edge.width=igraph::E(network)$sig, 
-     edge.color="black")
-}
 
 # select TF "BATF" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "BATF", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "BATF"
+            )
 
 # select TF "GATA1" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "GATA1", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "GATA1"
+            )
 
 # select TF "EOMES" and extract its connections
-plot_network(enrich_motif_pairs_filtered, TF_name = "EOMES", 
-             color_TF = "#70d9e0", color_bind_TF = "#e841da")
+plotNetwork(enrich_pairs = enrich_motif_pairs, 
+            TF_name = "EOMES"
+            )
 
 ```
 
@@ -729,11 +385,11 @@ results <- findEnrichMotifPair_Jolma2015(
 
 ```{r Th2_vs_Th0_JOLMA2015_2, echo=FALSE, warning=FALSE, message=FALSE}
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
-# load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("Th2_vs_Th0_JOLMA2015_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# # load the results data
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("Th2_vs_Th0_JOLMA2015_motif_pairs_results.rda")
 ```
 
 The enriched TF motif pairs are stored in the `results`.
@@ -774,11 +430,11 @@ results <- findEnrichMotifPairAll(
 
 ```{r Th1_vs_Th0_all_pairs_2, echo=FALSE, warning=FALSE, message=FALSE}
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
-# load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("Th1_vs_Th0_ATAC_JASPAR_UNVALIDATED_ALL_TF_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# # load the results data
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("Th1_vs_Th0_ATAC_JASPAR_UNVALIDATED_ALL_TF_motif_pairs_results.rda")
 ```
 
 The enriched TF motif pairs are stored in the `results`. These pairs contain duplicates (redundant entries) and should be removed. To do so one can make use of the function `removeDuplicateTFPairs`. Also filter for only TF genes. TF genes are defined by [Lambert et al., 2018](https://pubmed.ncbi.nlm.nih.gov/29425488/).
@@ -828,11 +484,11 @@ results <- findEnrichMotifPair(
 
 ```{r Th1_vs_Th0_all_pairs_2_1, echo=FALSE, warning=FALSE, message=FALSE}
 # load the TF genes list from Lambert et al., 2018
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("TF_list_from_Lanbert_etal_Cell_2018.rda")
-# load the results data
-setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
-load("Th1_vs_Th0_ATAC_JASPAR_UNVALIDATED_TF_motif_pairs_results.rda")
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("TF_list_from_Lanbert_etal_Cell_2018.rda")
+# # load the results data
+# setwd("/Users/njayavel/Downloads/Rpackages/enrich_motif/revision1_analysis/")
+# load("Th1_vs_Th0_ATAC_JASPAR_UNVALIDATED_TF_motif_pairs_results.rda")
 ```
 
 ```{r Th1_vs_Th0_all_pairs_3_1, eval=TRUE}
