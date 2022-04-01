@@ -71,7 +71,7 @@ plotEnrichPair = function(enrich_pairs,
   # select top 10 binding partners and remove redundant motifs
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 %in% tfs) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
+    dplyr::group_by(TF_name_1, TF_name_2) %>% 
     dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
     dplyr::group_by(TF_name_1) %>% dplyr::top_n(-10, pval_adj)
   
@@ -82,7 +82,7 @@ plotEnrichPair = function(enrich_pairs,
   order_var = order$Group.1
   
   enrich_pairs_filtered_mat <- enrich_pairs_filtered %>%
-    select(TF_name_1, TF_name_2, log10FC) %>%
+    dplyr::select(TF_name_1, TF_name_2, log10FC) %>%
     tidyr::spread(TF_name_2, log10FC) %>% 
     tibble::column_to_rownames(var = "TF_name_1") %>%
     as.matrix() %>%
@@ -141,7 +141,7 @@ plotNetwork <- function(enrich_pairs,
   
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 == TF_name) %>% 
-    group_by(TF_name_1, TF_name_2) %>% 
+    dplyr::group_by(TF_name_1, TF_name_2) %>% 
     dplyr::distinct(TF_name_2, .keep_all = TRUE) %>% 
     dplyr::group_by(TF_name_1) %>% dplyr::top_n(-10, pval_adj)
   
