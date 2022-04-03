@@ -1,8 +1,14 @@
-library(shiny)
-library(DT)
-data("example_peaks_data")
+#' Opens interactive shiny to run enrichmotifpairR.
+#' @examples
+#' \dontrun{
+#' runEnrichMotifPair()
+#' @import shiny
+#' @import DT
+#' @export
+#' 
 
 runEnrichMotifPair <- function(...){
+    data("example_peaks_data")
     # Define UI 
     ui <- fluidPage(
         
