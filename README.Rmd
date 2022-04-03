@@ -1,9 +1,6 @@
 ---
 title: "README"
-output:
-  rmarkdown::pdf_document:
-    highlight: pygments
-    toc: FALSE
+output: github_document
 ---
 
 ```{r, setup, include = FALSE}
@@ -48,9 +45,16 @@ devtools::install_github("nashchem/enrichmotifpairR")
 
 # load
 library(enrichmotifpairR)
-
 ```
+
 
 ## Use case examples
 
 See the `vignettes` directory for several use case examples.
+
+You can also interactively run `enrichmotifpairR` via a shiny app
+
+```{r, eval=FALSE}
+runEnrichMotifPair()
+```
+

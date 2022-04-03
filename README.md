@@ -1,3 +1,6 @@
+README
+================
+
 ## Introduction
 
 The identification and differential enrichment of transcription factor
@@ -8,7 +11,7 @@ enriched TF motifs and their binding partner motifs, or enriched motif
 pairs, in a given set of genomic regions relative to a control set of
 genomic regions.
 
-![enrichmotifpairR framework](supple_Figure1.png) 
+![enrichmotifpairR framework](supple_Figure1.png)
 
 ## Installation
 
@@ -44,3 +47,9 @@ library(enrichmotifpairR)
 ## Use case examples
 
 See the `vignettes` directory for several use case examples.
+
+You can also interactively run `enrichmotifpairR` via a shiny app
+
+``` r
+runEnrichMotifPair()
+```
