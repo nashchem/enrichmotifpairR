@@ -24,7 +24,7 @@ Imports:
     S4Vectors,
     rlang,
     TFBSTools
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.2
 Suggests: 
     testthat,
     knitr,
