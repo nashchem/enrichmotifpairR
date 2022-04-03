@@ -20,7 +20,7 @@ runEnrichMotifPair <- function(...){
         h5("A optional set of background regions can be provided as control. If none are provided,
        EnrichMotifPair will generate background regions based on the target inputs."),
         h5("Heatmaps are generated to visualize the degree of enrichment of select motifs, and networks display the range of TF-motif interactions."),
-        h5("A set of example DHS peaks from ESCs are provided. Use these as inputs by selecting 'Use Example Dataset'."),
+        h5("A set of example DHS peaks from ESCs are provided. Use these as inputs by selecting 'Use example dataset'."),
         
         # Sidebar panel for inputs ----
         sidebarPanel(
