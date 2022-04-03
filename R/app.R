@@ -2,6 +2,7 @@
 #' @examples
 #' \dontrun{
 #' runEnrichMotifPair()
+#' }
 #' @import shiny
 #' @import DT
 #' @export
