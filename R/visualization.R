@@ -85,13 +85,12 @@ plotEnrichPair = function(enrich_pairs,
     dplyr::select(TF_name_1, TF_name_2, log10FC) %>%
     tidyr::spread(TF_name_2, log10FC) %>% 
     tibble::column_to_rownames(var = "TF_name_1") %>%
-    as.matrix() %>%
-    tidyr::replace_na(0) 
+    as.matrix() 
   
   #idx <- match(enrich_pairs_filtered$TF_name, rownames(enrich_pairs_filtered_mat))
   #enrich_pairs_filtered_mat <- na.omit(enrich_pairs_filtered_mat[idx, ])
   
- 
+  enrich_pairs_filtered_mat[is.na(enrich_pairs_filtered_mat)] <- 0
   col_pal <- c("white", RColorBrewer::brewer.pal(9,"Reds"))
   heatmap = pheatmap::pheatmap(enrich_pairs_filtered_mat, cluster_rows=F, cluster_cols=T, silent = T)
   cluster_order = heatmap$tree_col$order
@@ -152,9 +151,10 @@ plotNetwork <- function(enrich_pairs,
     dplyr::select(TF_name_1, TF_name_2, sig)
   
   n_edges = length(unique(c(edges$TF_name_1, edges$TF_name_2)))
+  edge_df_n <- n_edges - 1
   nodes <- data.frame(
     name=unique(c(edges$TF_name_1, edges$TF_name_2)),
-    role=c(rep("TF", 1), rep("partner", n_edges - 1))
+    role=c(rep("TF", 1), rep("partner", edge_df_n))
   )
   # Turn it into igraph object
   network <- igraph::graph_from_data_frame(d=edges, vertices=nodes, 
@@ -166,10 +166,9 @@ plotNetwork <- function(enrich_pairs,
   # plotting the network
   sig = igraph::E(network)$sig
   GGally::ggnet2(network, node.size = 12, node.color=my_color, edge.color = "grey",
-         label = T, edge.size=log(sig), label.size = 9)
+         label = T, edge.size=log(sig), label.size = 4, layout.exp = 0.3)
+    
 }
-
-
 
 
 
