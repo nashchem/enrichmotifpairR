@@ -32,6 +32,9 @@ BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg
 
 # other packages
 install.packages(c("dplyr", "assertthat", "Matrix", "rlang"))
+
+# shiny app dependency packages
+install.packages(c("intergraph", "network", "sna"))
 ```
 
 Next install the `enrichmotifpairR` package
