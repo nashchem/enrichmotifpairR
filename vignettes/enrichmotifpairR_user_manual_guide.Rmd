@@ -1,6 +1,6 @@
 ---
-title: "enrichmotifpairR: An R package for finding enriched transcription factor motifs and their binding partners"
-author: "Naresh Doni Jayavelu and R. David Hawkins"
+title: "enrichmotifpairR: An R package/shiny app for finding enriched transcription factor motifs and their binding partners"
+author: "Naresh Doni Jayavelu, Nicholas Moss, and R. David Hawkins"
 date: "`r format(Sys.Date(), '%m/%d/%Y')`"
 #>output: rmarkdown::html_vignette
 output:
