@@ -51,11 +51,6 @@ library(enrichmotifpairR)
 
 See the `vignettes` directory for several use case examples.
 
-You can also interactively run `enrichmotifpairR` via a shiny app
-
-``` r
-runEnrichMotifPair()
-```
 
 ## Shiny app
 Web-based interactive shiny app is also available at [shiny app](https://hawkinslab.shinyapps.io/EnrichMotifPair/).
