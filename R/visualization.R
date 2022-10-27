@@ -18,6 +18,11 @@ plotEnrichment = function(enrich_motifs,
                           tfs
                           ){
   
+  # check TFs are valid
+  if (!tfs %in% enrich_motifs$TF_name){
+    stop("Not all TFs are present")
+  }
+  
   # filter for these selected TFs
   enrich_motifs_filtered <- enrich_motifs %>% 
     dplyr::filter(TF_name %in% tfs) %>% 
@@ -67,7 +72,11 @@ plotEnrichment = function(enrich_motifs,
 plotEnrichPair = function(enrich_pairs, 
                           tfs
                           ){
-
+  # check TFs are valid
+  if (!all(tfs %in% enrich_pairs$TF_name_1)){
+    stop("Not all TFs are present: must be in TF_name_1 column in Enriched Motif Pairs table")
+  }
+  
   # select top 10 binding partners and remove redundant motifs
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 %in% tfs) %>% 
@@ -136,7 +145,10 @@ plotNetwork <- function(enrich_pairs,
                         TF_name, 
                         color_TF = "#70d9e0", 
                         color_bind_TF = "#e841da"){
-  
+  # check TFs are valid
+  if (!TF_name %in% enrich_pairs$TF_name_1){
+    stop("TF not present: must be in TF_name_1 column in Enriched Motif Pairs table")
+  }
   
   enrich_pairs_filtered <- enrich_pairs %>% 
     dplyr::filter(TF_name_1 == TF_name) %>% 
@@ -169,6 +181,4 @@ plotNetwork <- function(enrich_pairs,
          label = T, edge.size=log(sig), label.size = 4, layout.exp = 0.3)
     
 }
-
-
 
