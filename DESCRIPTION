@@ -25,7 +25,10 @@ Imports:
     rlang,
     TFBSTools,
     igraph,
-    GGally
+    GGally,
+    network,
+    sna,
+    scales
 RoxygenNote: 7.1.2
 Suggests: 
     testthat,
