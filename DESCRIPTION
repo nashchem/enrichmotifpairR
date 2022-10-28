@@ -23,7 +23,9 @@ Imports:
     stats,
     S4Vectors,
     rlang,
-    TFBSTools
+    TFBSTools,
+    igraph,
+    GGally
 RoxygenNote: 7.1.2
 Suggests: 
     testthat,

@@ -28,7 +28,7 @@ BiocManager::install(c("GenomicRanges", "SummarizedExperiment", "motifmatchr",
                        "TFBSTools", "S4Vectors", "GO.db"))
 
 # genome annotations
-BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg38")
+BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg38"))
 
 
 ```
