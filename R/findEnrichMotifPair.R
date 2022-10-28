@@ -207,25 +207,5 @@ findEnrichMotifPair = function(target_data, background_data = NULL,
 }
 
 
-results <- findEnrichMotifPair(one, two)
-
-one <- read.table("Desktop/UW/shiny_testing/hg38_encode1_small.bed")
-two <- read.table("Desktop/UW/shiny_testing/hg38_encode2_small.bed")
-one$V1 %>% unique()
-two$V1 %>% unique()
-results <- findEnrichMotifPair(one, two, "hg19")
-
-motif_anno_data<-enrichmotifpairR:::motif_anno_data
-all_motifs<-enrichmotifpairR:::all_motifs
-
-target_data = one
-background_data = two
-genome_ver = "hg38"
-scramble_data = T
-motif_database = "CISBP"
-Pvalue_computation = "hyper"
-Pvalue_threshold = 0.01
-Pvalue_adjust_method = "BH"
-
 
 

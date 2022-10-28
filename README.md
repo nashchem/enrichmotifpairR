@@ -25,16 +25,12 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 # other dependency packages
 BiocManager::install(c("GenomicRanges", "SummarizedExperiment", "motifmatchr", 
                        "BiocGenerics", "Biostrings", "GenomeInfoDb", "IRanges",
-                       "TFBSTools", "S4Vectors", ""))
+                       "TFBSTools", "S4Vectors", "GO.db"))
 
 # genome annotations
-BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg38"))
+BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg38")
 
-# other packages
-install.packages(c("dplyr", "assertthat", "Matrix", "rlang"))
 
-# shiny app dependency packages
-install.packages(c("intergraph", "network", "sna"))
 ```
 
 Next install the `enrichmotifpairR` package
