@@ -73,7 +73,7 @@ plotEnrichPair = function(enrich_pairs,
                           tfs
                           ){
   # check TFs are valid
-  if (!all(tfs %in% enrich_pairs$TF_name_1)){
+  if (!tfs %in% enrich_pairs$TF_name_1){
     stop("Not all TFs are present: must be in TF_name_1 column in Enriched Motif Pairs table")
   }
   

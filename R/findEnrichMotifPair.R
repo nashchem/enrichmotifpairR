@@ -141,7 +141,7 @@ findEnrichMotifPair = function(target_data, background_data = NULL,
         tg_mf_c1 <- data.frame(motif_name = colnames(tg2), tg_motif_count = Matrix::colSums(tg2), row.names = NULL, stringsAsFactors = FALSE)
         bg_mf_c1 <- data.frame(motif_name = colnames(bg2), bg_motif_count = Matrix::colSums(bg2), row.names = NULL, stringsAsFactors = FALSE)
 
-        tg_bg_mf_c <- dplyr::inner_join(tg_mf_c1, bg_mf_c1)
+        tg_bg_mf_c <- suppressMessages(dplyr::inner_join(tg_mf_c1, bg_mf_c1))
         tg_bg_mf_c$fold_enrich <- ((tg_bg_mf_c$tg_motif_count + 0)/(dim(tg2)[1] + 0))/((tg_bg_mf_c$bg_motif_count + 0)/(dim(bg2)[1] + 0))
 
         # computes P-values based on binomial distribution
