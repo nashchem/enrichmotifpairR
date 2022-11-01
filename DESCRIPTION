@@ -28,7 +28,8 @@ Imports:
     GGally,
     network,
     sna,
-    scales
+    scales,
+    intergraph
 RoxygenNote: 7.1.2
 Suggests: 
     testthat,
