@@ -8,8 +8,6 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews:
-    BSgenome.Hsapiens.UCSC.hg19,
-    BSgenome.Hsapiens.UCSC.hg38
 Imports: 
     dplyr,
     assertthat,
@@ -35,5 +33,7 @@ RoxygenNote: 7.1.2
 Suggests: 
     testthat,
     knitr,
-    rmarkdown
+    rmarkdown,
+    BSgenome.Hsapiens.UCSC.hg19,
+    BSgenome.Hsapiens.UCSC.hg38
 VignetteBuilder: knitr
