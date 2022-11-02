@@ -8,6 +8,8 @@ License: GPL-2
 Encoding: UTF-8
 LazyData: true
 biocViews:
+    BSgenome.Hsapiens.UCSC.hg19,
+    BSgenome.Hsapiens.UCSC.hg38
 Imports: 
     dplyr,
     assertthat,
@@ -15,8 +17,6 @@ Imports:
     SummarizedExperiment,
     motifmatchr,
     Matrix,
-    BSgenome.Hsapiens.UCSC.hg19,
-    BSgenome.Hsapiens.UCSC.hg38,
     BiocGenerics,
     Biostrings,
     GenomeInfoDb,
