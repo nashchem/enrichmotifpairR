@@ -15,20 +15,20 @@ genomic regions.
 
 ## Installation
 
-First install the dependency packages.
+First install the genome annotation packages.
 
 ``` r
 # install devtools and biocmanager if necessary
 if (!requireNamespace("BiocManager", quietly = TRUE))
     install.packages(c("BiocManager", "devtools"))
 
-# other dependency packages
-BiocManager::install(c("GenomicRanges", "SummarizedExperiment", "motifmatchr", 
-                       "BiocGenerics", "Biostrings", "GenomeInfoDb", "IRanges",
-                       "TFBSTools", "S4Vectors", "GO.db"))
+# Install genome annotations either hg19 or hg38 depending on your input genome 
 
-# genome annotations
-BiocManager::install(c("BSgenome.Hsapiens.UCSC.hg19", "BSgenome.Hsapiens.UCSC.hg38"))
+## Install hg19 
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg19")
+
+## Install hg38
+BiocManager::install("BSgenome.Hsapiens.UCSC.hg38")
 
 
 ```
