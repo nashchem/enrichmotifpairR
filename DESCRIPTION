@@ -3,7 +3,7 @@ Title: Motifs and Motif pairs enrichment analysis on a set of genomic regions
 Version: 0.0.0.9000
 Authors@R: person("Naresh", "Doni Jayavelu", email = "nashchem@gmail.com", role = c("aut", "cre"))
 Description: An R based implementation for differential motifs and motif pairs enrichment analysis on a set of genomic regions relative to user provided background or randomly generated genomic backgrounds.
-Depends: R (>= 3.5)
+Depends: R (>= 4.2)
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
@@ -29,7 +29,7 @@ Imports:
     sna,
     scales,
     intergraph
-RoxygenNote: 7.1.2
+RoxygenNote: 7.2.1
 Suggests: 
     testthat,
     knitr,
