@@ -28,9 +28,7 @@ Imports:
     network,
     sna,
     scales,
-    intergraph,
-    BSgenome.Hsapiens.UCSC.hg19,
-    BSgenome.Hsapiens.UCSC.hg38
+    intergraph
 RoxygenNote: 7.2.1
 Suggests: 
     testthat,
